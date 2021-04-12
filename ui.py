@@ -42,8 +42,8 @@ class Navbar(tk.Frame):
         fileMenu.add_command(label='Exit', command=partial(MainApplication.onExit, self))
 
         menubar.add_cascade(label='File', menu=fileMenu)
-        # menubar.add_command(label='Undo', command=partial(MainApplication.refresh_canvas, MainApplication))
-        # menubar.add_command(label='Redo', command=partial(MainApplication.saveFile, self))
+        menubar.add_command(label='Undo', command=partial(MainApplication.refresh_canvas, MainApplication))
+        menubar.add_command(label='Redo', command=partial(MainApplication.saveFile, self))
 
 
 class Main(tk.Frame):
