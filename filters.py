@@ -1,12 +1,13 @@
 """
-Course: CSE353
-File: teach1.py (week 06)
+File: filters.py
+Author: Adam Applegate
+Description: 
 
-Tasks
-
+    Contains the logic to filter images in different styles
+   
 """
+
 import numpy as np
-from random import randrange
 import cv2
 
 # Credit to Vardan Agarwal- https://medium.com/@vardanagarwal16
@@ -30,8 +31,10 @@ def brightness(image):
 
     return processed_image
 
+
 # Credit to Geeks for Geeks: https://www.geeksforgeeks.org/changing-the-contrast-and-brightness-of-an-image-using-python-opencv/
-def brightness_contrast(image, brightness=0, contrast=0):
+# Credit to Vardan Agarwal- https://medium.com/@vardanagarwal16
+def brightness_contrast_sharpness(brightness, contrast, sharpness, image):
     
     if brightness != 0:
         if brightness > 0:
@@ -54,23 +57,16 @@ def brightness_contrast(image, brightness=0, contrast=0):
         
         buf = cv2.addWeighted(buf, alpha_c, buf, 0, gamma_c)
 
+    if sharpness != 0:
+        buf = cv2.detailEnhance(buf, sigma_s=10, sigma_r=float(sharpness / 100))
+
+        kernel_sharpening = np.array([[-1,-1,-1], 
+                                [-1, 9,-1],
+                                [-1,-1,-1]])
+
+        buf = cv2.filter2D(buf, -1, kernel_sharpening)
+
     return buf
-    
-
-
-# Credit to Vardan Agarwal- https://medium.com/@vardanagarwal16
-def sharpen(image):
-
-    processed_image = cv2.detailEnhance(image, sigma_s=10, sigma_r=0.15)
-
-    kernel_sharpening = np.array([[-1,-1,-1], 
-                              [-1, 9,-1],
-                              [-1,-1,-1]])
-
-    processed_image = cv2.filter2D(image, -1, kernel_sharpening)
-
-    return processed_image
-
 
 def splash(filename, color1, color2):
     pass
