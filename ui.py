@@ -36,8 +36,14 @@ class Navbar(tk.Frame):
         fileMenu = tk.Menu(self)
         
         fileMenu.add_command(label='Open File...', command=partial(MainApplication.open_file, self.parent))
-        fileMenu.add_command(label='Save File...', command=partial(MainApplication.save_file, self.parent))
+
         fileMenu.add_separator()
+
+        fileMenu.add_command(label='Save', command=partial(MainApplication.save_file, self.parent))
+        fileMenu.add_command(label='Save As...', command=partial(MainApplication.save_file_as, self.parent))
+
+        fileMenu.add_separator()
+
         fileMenu.add_command(label='Exit', command=partial(MainApplication.on_exit, self))
 
         menubar.add_cascade(label='File', menu=fileMenu)
@@ -192,6 +198,7 @@ class MainApplication(tk.Frame):
         self.video_toolbar.grid(row=1, column=0)
         self.display.grid(row=0, column=1)
 
+        # Load default image when program starts
         self.update_file_type('media/bird.jpg')
 
         self.refresh_canvas()
@@ -407,8 +414,8 @@ class MainApplication(tk.Frame):
 
         # If there was an issue opening a file, let the user know
         if (file == None or file == ''):
-            self.main.label_messages.config(text='Error opening file', fg='red')
-
+            self.message_user('Error opening file', 'red')
+   
         # File found. Load it into the program
         else:
             if(self.filetype == 'mp4'):
@@ -422,29 +429,66 @@ class MainApplication(tk.Frame):
 
 
     def save_file(self):
-        default_extension = self.filetype
-        filename = None
+        """ Save the file to the saved filepath """
 
-        if (default_extension == 'mp4'):
-            filename = tkinter.filedialog.asksaveasfilename(defaultextension='mp4', initialdir='/', title='Save File', filetypes=(
+        # If there was an issue saving a file, let the user know
+        if self.filepath == None or self.filepath == '':
+                self.message_user('Error saving file. File not loaded', 'red')
+
+        if (self.filetype == 'mp4'):
+            video = cv2.VideoCapture(self.filepath)
+
+            frame_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+            frame_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            frame_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+            fps = int(video.get(cv2.CAP_PROP_FPS))
+
+            video_writer = cv2.VideoWriter(self.filepath, cv2.VideoWriter_fourcc(*'mp4v'), fps, (frame_width, frame_height))
+
+
+            while(video.isOpened()):
+                ret, frame = video.read()
+
+                if ret == True:
+                    video_writer.write(frame)
+
+                #If a frame isn't read properly, exit the loop
+                else:
+                    break
+
+            video.release()
+            video_writer.release()
+
+            self.message_user('Video saved successfully', 'green')
+
+        elif (self.filetype == 'jpg' or self.filetype == 'png'):
+            cv2.imwrite(self.filepath, self.processed_file)
+            self.message_user('Image saved successfully', 'green')
+
+
+    def save_file_as(self):
+        """ Save the file to the location specified by the user """
+
+        if (self.filetype == 'mp4'):
+            filepath = tkinter.filedialog.asksaveasfilename(defaultextension='mp4', initialdir='/', title='Save File', filetypes=(
                 ('mp4 files', '*.mp4'),
                 ('all files', '*.*')
                 ))
 
             # If there was an issue saving a file, let the user know
-            if filename == None or filename == '':
+            if filepath == None or filepath == '':
                 self.message_user('Error saving file', 'red')
 
             else:
                 # Save a video
-                video = cv2.VideoCapture(self.filename)
+                video = cv2.VideoCapture(self.filepath)
 
                 frame_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
                 frame_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
                 frame_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
                 fps = int(video.get(cv2.CAP_PROP_FPS))
 
-                video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'mp4v'), fps, (frame_width, frame_height))
+                video_writer = cv2.VideoWriter(filepath, cv2.VideoWriter_fourcc(*'mp4v'), fps, (frame_width, frame_height))
 
 
                 while(video.isOpened()):
@@ -462,25 +506,31 @@ class MainApplication(tk.Frame):
 
                 self.message_user('Video saved successfully', 'green')
 
-        elif (default_extension == 'jpg' or default_extension == 'png'):
-            filename = tkinter.filedialog.asksaveasfilename(defaultextension=default_extension, initialdir='/', title='Save File', filetypes=(
+        elif (self.filetype == 'jpg' or self.filetype == 'png'):
+            filepath = tkinter.filedialog.asksaveasfilename(defaultextension=self.filetype, initialdir='/', title='Save File', filetypes=(
                 ('jpeg files', '*.jpg'), 
                 ('png files', '*.png')))
 
             # If there was an issue saving a file, let the user know
-            if filename == None or filename == '':
+            if filepath == None or filepath == '':
                 self.message_user('Error saving file', 'red')
 
             # Save an image
             else:
-                cv2.imwrite(filename, self.processed_file)
+                cv2.imwrite(filepath, self.processed_file)
                 self.message_user('Image saved successfully', 'green')
 
+
+
     def message_user(self, message, color):
+        """ Prints a message to the message center in the specified color """
         self.display.label_messages.config(text='')
         self.display.label_messages.config(text=message, fg=color)
 
 
+######################################
+# Main loop that starts the program
+######################################
 if __name__ == '__main__':
 
     # Initialize the program
@@ -490,6 +540,7 @@ if __name__ == '__main__':
     # Set the window title & some settings
     root.title('Filter Free')
     root.configure(background='white')
+    root.option_add('*tearOff', False)
 
     # Run the main logic loop
     root.mainloop()
