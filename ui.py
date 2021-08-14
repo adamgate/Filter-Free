@@ -220,7 +220,7 @@ class MainApplication(tk.Frame):
         self.display.grid(row=0, column=1)
 
         # Load default image when program starts
-        self.update_file_type('media/old_fashioned.jpg')
+        self.update_file_type('media/test-cartoon.jpg')
 
         self.refresh_canvas()
 
@@ -330,7 +330,7 @@ class MainApplication(tk.Frame):
             # Convert the numpy array to a PIL image that can be displayed on Tkinter canvas
             image_canvas = ImageTk.PhotoImage(Image.fromarray(image_canvas))
 
-             # Prevent garbage collection from deleting the image
+            # Prevent garbage collection from deleting the image
             root.image_canvas = image_canvas
 
             # Display the image on the center of the canvas
@@ -518,6 +518,9 @@ class MainApplication(tk.Frame):
             self.message_user('Video saved successfully', 'green')
 
         elif (self.filetype == 'jpg' or self.filetype == 'png'):
+            #Make sure the correct color channels are selected
+            self.processed_file = cv2.cvtColor(self.processed_file, cv2.COLOR_BGR2RGBA)
+
             cv2.imwrite(self.filepath, self.processed_file)
             self.message_user('Image saved successfully', 'green')
 
@@ -574,6 +577,8 @@ class MainApplication(tk.Frame):
 
             # Save an image
             else:
+                #Make sure the correct color channels are selected
+                self.processed_file = cv2.cvtColor(self.processed_file, cv2.COLOR_BGR2RGBA)
                 cv2.imwrite(filepath, self.processed_file)
                 self.message_user('Image saved successfully', 'green')
 
