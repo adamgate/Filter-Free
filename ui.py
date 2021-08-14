@@ -17,6 +17,7 @@ from functools import partial
 
 from image_processor import ImageProcessor
 from video_processor import VideoProcessor
+from undo_redo_manager import UndoRedoManager
 
 
 class Navbar(tk.Frame):
@@ -26,13 +27,16 @@ class Navbar(tk.Frame):
         super().__init__()
         self.parent = parent
 
+        self.menubar = ''
+
         self.initUI()
 
     def initUI(self):
-        menubar = tk.Menu(self.master)
+        self.menubar = tk.Menu(self.master)
 
-        self.master.config(menu=menubar)
+        self.master.config(menu=self.menubar)
 
+        # create Submenu titled "File"
         fileMenu = tk.Menu(self)
         
         fileMenu.add_command(label='Open File...', command=partial(MainApplication.open_file, self.parent))
@@ -46,9 +50,26 @@ class Navbar(tk.Frame):
 
         fileMenu.add_command(label='Exit', command=partial(MainApplication.on_exit, self))
 
-        menubar.add_cascade(label='File', menu=fileMenu)
-        # menubar.add_command(label='Undo', command=partial(MainApplication.refresh_canvas, MainApplication))
-        # menubar.add_command(label='Redo', command=partial(MainApplication.save_file, self))
+        self.menubar.add_cascade(label='File', menu=fileMenu)
+
+        # self.menubar.add_command(label='Undo', command=partial(MainApplication.undo, MainApplication))
+        # self.menubar.add_command(label='Redo', command=partial(MainApplication.redo, self))
+
+        root.configure(menu=self.menubar)
+
+    # # Enable Undo/ Redo buttons
+    # def enable_undo(self):
+    #     self.menubar.entryconfig('Undo', state='normal')
+        
+    # def enable_redo(self):
+    #     self.menubar.entryconfig('Redo', state='normal')
+
+    # # Disable Undo/ Redo buttons
+    # def disable_undo(self):
+    #     self.menubar.entryconfig('Undo', state='disabled')
+    
+    # def disable_redo(self):
+    #     self.menubar.entryconfig('Redo', state='disabled')
 
 
 class ImageToolbar(tk.Frame):
@@ -104,8 +125,8 @@ class ImageToolbar(tk.Frame):
         btn_apply_scales.pack(side='top', pady=(15, 0))
 
         # Reset values in each scale
-        btn_apply_scales = tk.Button(self.frame, text='Reset', command=self.parent.reset_scales)
-        btn_apply_scales.pack(side='top', pady=(15, 0))
+        btn_reset_scales = tk.Button(self.frame, text='Reset', command=self.parent.reset_scales)
+        btn_reset_scales.pack(side='top', pady=(15, 0))
 
 
 class VideoToolbar(tk.Frame):
@@ -168,6 +189,9 @@ class MainApplication(tk.Frame):
 
     image_processor = ImageProcessor()
     video_processor = VideoProcessor()
+    # command_manager = UndoRedoManager()
+
+    navbar = ''
 
     filepath = None
     filename = None
@@ -178,9 +202,6 @@ class MainApplication(tk.Frame):
 
     # The edited image
     processed_file = None
-
-    undo_stack = None
-    redo_Stack = None
     
     def __init__(self, parent, *args, **kwargs):
         super().__init__()
@@ -199,15 +220,43 @@ class MainApplication(tk.Frame):
         self.display.grid(row=0, column=1)
 
         # Load default image when program starts
-        self.update_file_type('media/bird.jpg')
+        self.update_file_type('media/old_fashioned.jpg')
 
         self.refresh_canvas()
+
+        # self.manage_commands()
 
         self.message_user('Welcome to Filter Free!', 'green')
 
         # Create a temp folder if none exists
         if not os.path.exists('temp'):
             os.makedirs('temp')
+
+
+    # def manage_commands(self):
+    #     """ Enables or disables the undo/redo buttons depending on the size of the undo/redo stacks """
+
+    #     if (self.command_manager.get_undo_size() > 0):
+    #         self.navbar.enable_undo()
+    #     elif (self.command_manager.get_undo_size() == 0):
+    #         self.navbar.disable_undo()
+
+    #     if (self.command_manager.get_redo_size() > 0):
+    #         self.navbar.enable_redo()
+    #     elif (self.command_manager.get_redo_size() == 0):
+    #         self.navbar.disable_redo()
+
+
+    # def undo(self):
+    #     self.processed_file = self.command_manager.undo()
+    #     self.manage_commands(self)
+    #     self.refresh_canvas()
+
+
+    # def redo(self):
+    #     self.processed_file = self.command_manager.redo()
+    #     self.manage_commands(self)
+    #     self.refresh_canvas()
 
 
     def update_file_type(self, filepath):
@@ -315,6 +364,7 @@ class MainApplication(tk.Frame):
         else:
             self.message_user('Error', 'red')
 
+
     def play_video(self):
         """ Plays a video loaded into the display area """
 
@@ -347,7 +397,10 @@ class MainApplication(tk.Frame):
     def call_filter(self, filter):
         """ Takes input from the dropdown menu,and calls the selected filter """
 
-        if (self.filetype == 'png' or self.filetype == 'jpg'):
+        if (self.filetype == 'png' or self.filetype == 'jpg' or self.filetype == 'jpeg'):
+            # self.command_manager.push_undo_stack(self.processed_file)
+            # self.manage_commands()
+
             self.processed_file = self.image_processor.filter_image(filter, self.original_file)
 
         else:
@@ -361,6 +414,9 @@ class MainApplication(tk.Frame):
 
     def apply_scales(self):
         """ Takes input from the scales, and calls the appropriate filter """
+
+        # self.command_manager.push_undo_stack(self.processed_file)
+        # self.manage_commands()
 
         self.processed_file = self.image_processor.filter_apply_scales(
                         self.image_toolbar.scale_brightness.get(), 
@@ -468,7 +524,7 @@ class MainApplication(tk.Frame):
 
     def save_file_as(self):
         """ Save the file to the location specified by the user """
-
+       
         if (self.filetype == 'mp4'):
             filepath = tkinter.filedialog.asksaveasfilename(defaultextension='mp4', initialdir='/', title='Save File', filetypes=(
                 ('mp4 files', '*.mp4'),
@@ -506,7 +562,8 @@ class MainApplication(tk.Frame):
 
                 self.message_user('Video saved successfully', 'green')
 
-        elif (self.filetype == 'jpg' or self.filetype == 'png'):
+        elif (self.filetype == 'jpg' or self.filetype == 'jpeg' or self.filetype == 'png'):
+            print('saving file...')
             filepath = tkinter.filedialog.asksaveasfilename(defaultextension=self.filetype, initialdir='/', title='Save File', filetypes=(
                 ('jpeg files', '*.jpg'), 
                 ('png files', '*.png')))
