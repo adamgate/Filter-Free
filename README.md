@@ -8,4 +8,4 @@ Check out how it was built [here](https://adamapplegate.github.io/projects/filte
 
 **Credit:**
 * [Pexels.com](https://www.pexels.com/) for the stock images
-* FontAwesome for the tab icon (https://fontawesome.com/license)
+* [FontAwesome](https://fontawesome.com/license) for the tab icon 
