@@ -4,7 +4,7 @@ Filter Free is a straightforward piece of image editing software built in Python
 
 Check out how it was built [here](https://adamapplegate.github.io/projects/filter-free.html)!.
 
-![adamapplegate.github.io screenshot](https://github.com/AdamApplegate/adamapplegate.github.io/assets/img/portfolio/filter-free/emboss_demo_v1.gif?raw=true "Filter Free Demo")
+![adamapplegate.github.io screenshot](https://adamapplegate.github.io/assets/img/portfolio/filter-free/emboss_demo_v1.gif "Filter Free Demo")
 
 **Credit:**
 * [Pexels.com](https://www.pexels.com/) for the stock images
